@@ -1,171 +1,132 @@
 # Pythmap
 
-A comprehensive network scanning and analysis tool built in Python that combines nmap, banner grabbing, and logging capabilities for network reconnaissance and security assessment.
+Pythmap is a comprehensive network scanning and analysis tool built in Python. It combines nmap, banner grabbing, and logging capabilities for network reconnaissance and security assessments.
 
 ## Features
+
 - Nmap port scanning integration
 - Banner grabbing with service detection
+- Vulnerability scanning using nmap NSE scripts
 - JSON logging with timestamps
-- TCP connection scanning
-- Service identification
+- Multithreaded scanning for improved performance
+- Interactive user interface for easy configuration
+- Root privilege checking and elevation
 
 ## Prerequisites
-Make sure you have these installed:
+
+Before using Pythmap, ensure you have the following installed:
+
 - Python 3.x
 - Nmap
 
 ## Python Dependencies
+
+Pythmap requires the following Python libraries:
+
 ```bash
-pip install python-nmap
-pip install scapy
+```bash
+pip install python-nmap scapy
+```
+
 ```
 
 ## Installation
-1. Clone the repository
+
+1. Clone the Pythmap repository:
+
 ```bash
-git clone https://github.com/yourusername/NmapPythonScript.git
-cd NmapPythonScript
+git clone https://github.com/yourusername/pythmap.git
+cd pythmap
 ```
 
-2. Install dependencies
+2. Install the required dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Usage
-Run the script:
+
+To run Pythmap, simply execute the following command:
+
 ```bash
-python3 scanner.py
+sudo python3 scanner.py
 ```
 
-The script will:
-1. Prompt for target IP
-2. Scan for open ports
-3. Attempt banner grabbing
-4. Save results to a JSON log file
+The script will guide you through the scanning process:
+
+1. Enter the target IP address to scan
+2. Select the port range to scan (common, extended, full, or custom)
+3. The script will perform port scanning, banner grabbing, and vulnerability scanning
+
+4. Scan results will be displayed in the console and saved to a JSON log file
 
 ## Example Output
+
+Here's an example of running Pythmap against a target IP:
+
 ```
-Enter target IP: 10.10.11.50
-Scanning 10.10.11.50 for open ports...
-
-Host: 10.10.11.50 ()
-State: up
-
-Protocol: tcp
-Port: 22, State: open
-Port: 80, State: open
+Enter target IP: 192.168.1.100  
+Scanning 192.168.1.100 for open ports...
+Progress: [=================================================] 100%
+Found open port: 22
+Found open port: 80
+Scan completed! Found 2 open ports
 
 Performing banner grabbing...
-[+] Banner for port 22: SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.10
+[+] Banner for port 22: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5
+[+] Banner for port 80: Apache/2.4.41 (Ubuntu)
+
+Performing vulnerability scan...
+Running vulnerability scripts (this may take a while)...
+
+[+] Found potential vulnerabilities on port 22:
+  - ssh-auth-methods: none
+[+] Found potential vulnerabilities on port 80:
+  - http-slowloris-check: VULNERABLE
+
+[+] Scan results saved to scan_192.168.1.100_2025-02-25_09-30-15.json
 ```
 
 ## Log Format
-Scans are automatically logged to JSON files:
+
+Scan results are automatically logged to timestamped JSON files. Here's an example log file:
+
 ```json
 {
-    "scan_time": "2025-02-23_15-30-45",
-    "target": "10.10.11.50",
+    "metadata": {
+        "scan_time": "2025-02-25_09-30-15",
+        "scan_duration_seconds": 35.8,
+        "target_ip": "192.168.1.100",
+        "target_hostname": "somehostname.local",
+        "ports_scanned": {
+            "start": 1,
+            "end": 1024,
+            "total": 1024
+        },
+        "open_ports_count": 2
+    },
     "open_ports": [
         {
             "port_number": 22,
-            "banner": "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.10",
-            "service": "SSH"
+            "service": "SSH",
+            "version": "OpenSSH_8.2p1 Ubuntu-4ubuntu0.5",
+            "banner": "SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5",
+            "vulnerabilities": {
+                "ssh-auth-methods": "none"
+            },
+            "scan_time": "09:30:20"
+        },
+        {
+            "port_number": 80,
+            "service": "HTTP",
+            "version": "Apache/2.4.41 (Ubuntu)",
+            "banner": "Apache/2.4.41 (Ubuntu)",
+            "vulnerabilities": {
+                "http-slowloris-check": "VULNERABLE"
+            },
+            "scan_time": "09:30:25"
         }
     ]
 }
 ```
-
-## Project Structure
-```
-NmapPythonScript/
-│
-├── scanner.py          # Main script file
-├── requirements.txt    # Python dependencies
-├── README.md          # Project documentation
-└── scans/             # Directory for scan results
-```
-
-## Functions
-
-### scan_ports(target)
-Performs port scanning using nmap.
-- Parameters: target (str) - IP address to scan
-- Returns: list of open ports
-
-### banner_grabbing(target, ports)
-Attempts to grab service banners from open ports.
-- Parameters: 
-  - target (str) - IP address
-  - ports (list) - List of ports to check
-- Returns: dict of port:banner pairs
-
-### nmap_logger(ports, target)
-Logs scan results to JSON file.
-- Parameters:
-  - ports (list) - List of open ports
-  - target (str) - Scanned IP address
-- Creates timestamped JSON file with results
-
-## TODO
-- Add threading for faster scans
-- Implement service version detection
-- Add vulnerability checking against known CVEs
-- Add WAF detection for web ports
-- Implement DNS enumeration
-- Add custom service fingerprinting
-- Add port knock sequence detection
-- Add report generation (HTML, PDF)
-- Add database integration for tracking changes
-- Add command line arguments for better control
-- Implement proxy support
-- Add rate limiting options
-- Add output filters
-- Add custom port ranges
-- Add target list support (scan multiple IPs)
-
-## Troubleshooting
-Common issues:
-
-1. Permission denied
-```bash
-# Run with sudo for SYN scans
-sudo python3 scanner.py
-```
-
-2. Nmap not found
-```bash
-# Linux
-sudo apt-get install nmap
-
-# MacOS
-brew install nmap
-```
-
-3. Python dependencies
-```bash
-# If requirements.txt installation fails
-pip install python-nmap --user
-pip install scapy --user
-```
-
-## Legal Notice
-This tool is for educational purposes and authorized testing only. Users are responsible for obtaining appropriate permissions before scanning any networks or systems.
-
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-MIT License
-
-## Author
-[Your Name]
-
-## Acknowledgments
-- Nmap project (https://nmap.org)
-- Python-nmap library
-- Scapy project

@@ -1,17 +1,23 @@
+"""
+Enhanced Network Scanner with Vulnerability Detection
+Features:
+- Port scanning with progress bar
+- Service banner grabbing
+- Vulnerability scanning
+- JSON logging
+"""
 
-import concurrent
 import nmap
 from scapy.all import *
 from datetime import datetime
 import json
 import socket
-from concurrent.futures import ThreadPoolExecutor
-import threading
 import os
 import sys
 import ipaddress
 import re
-import time
+import concurrent
+from concurrent.futures import ThreadPoolExecutor
 
 
 def check_root():
@@ -82,40 +88,46 @@ def get_port_range():
             print("Please enter valid numbers!")
 
 
-def get_protocol_probe(port):
-    """Return appropriate probe for common protocols"""
-    probes = {
-        21: {  # FTP
-            'probe': b"",
-            'timeout': 5
-        },
-        22: {  # SSH
-            'probe': b"",
-            'timeout': 3
-        },
-        23: {  # Telnet
-            'probe': b"\xff\xfb\x01\xff\xfb\x03\xff\xfd\x0f\xff\xfd\x18",
-            'timeout': 5
-        },
-        25: {  # SMTP
-            'probe': b"EHLO test.com\r\n",
-            'timeout': 5
-        },
-        80: {  # HTTP
-            'probe': b"GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: Mozilla/5.0\r\nAccept: */*\r\n\r\n",
-            'timeout': 5
-        },
-        443: {  # HTTPS
-            'probe': b"\x16\x03\x01\x00\x01\x01",
-            'timeout': 5
-        },
-        3306: {  # MySQL
-            'probe': b"\x0a",
-            'timeout': 5
-        }
-    }
-    return probes.get(port, {'probe': b"", 'timeout': 3})
+def scan_ports(target, start_port, end_port):
+    """Perform port scanning with progress bar"""
+    print(f"\nScanning {target} for open ports...")
+    nm = nmap.PortScanner()
+    open_ports = []
 
+    def update_progress(progress):
+        bar_length = 50
+        filled = int(bar_length * progress)
+        bar = '=' * filled + '-' * (bar_length - filled)
+        percent = int(progress * 100)
+        print(f'\rProgress: [{bar}] {percent}%', end='')
+
+    try:
+        # Scan entire range at once with aggressive timing
+        port_range = f"{start_port}-{end_port}"
+        nm.scan(target, ports=port_range, arguments='-sS -T4 -n --min-rate=1000')
+
+        if target in nm.all_hosts():
+            total_ports = end_port - start_port + 1
+            ports_processed = 0
+
+            for port in range(start_port, end_port + 1):
+                ports_processed += 1
+                progress = ports_processed / total_ports
+                update_progress(progress)
+
+                try:
+                    if nm[target].has_tcp(port) and nm[target]['tcp'][port]['state'] == 'open':
+                        print(f"\nFound open port: {port}")
+                        open_ports.append(port)
+                except:
+                    continue
+
+        print(f"\nScan completed! Found {len(open_ports)} open ports")
+
+    except Exception as e:
+        print(f"\nError during scan: {e}")
+
+    return sorted(open_ports)
 
 def get_service_name(port):
     """Identify common services by port number"""
@@ -135,66 +147,27 @@ def get_service_name(port):
     return common_ports.get(port, "Unknown")
 
 
-class PortScanner:
-    def __init__(self):
-        self.scanner = nmap.PortScanner()
-        self._lock = threading.Lock()
+def threaded_banner_grab(target, port):
+    """Perform banner grabbing for a single port"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(2)
+        s.connect((target, port))
 
-    def scan_port(self, target, port):
-        """Thread-safe port scanning"""
-        with self._lock:
-            try:
-                self.scanner.scan(target, str(port), arguments='-sS -Pn -n --host-timeout 30')
-                if target in self.scanner.all_hosts():
-                    if self.scanner[target].has_tcp(port):
-                        return port, self.scanner[target]['tcp'][port]['state']
-            except Exception as e:
-                print(f"Error scanning port {port}: {e}")
-            return port, 'closed'
+        if port == 80 or port == 8080:
+            s.send(b"GET / HTTP/1.1\r\nHost: " + target.encode() + b"\r\n\r\n")
+        elif port == 443 or port == 8443:
+            return port, "HTTPS Service"
 
-
-def threaded_banner_grab(target, port, max_retries=3):
-    """Enhanced banner grabbing with retries and protocol-specific handling"""
-    probe_info = get_protocol_probe(port)
-
-    for attempt in range(max_retries):
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(probe_info['timeout'])
-            s.connect((target, port))
-
-            if probe_info['probe']:
-                s.send(probe_info['probe'])
-
-            banner = ""
-            try:
-                while True:
-                    data = s.recv(1024).decode('utf-8', errors='ignore').strip()
-                    if not data:
-                        break
-                    banner += data
-            except socket.timeout:
-                pass
-
-            s.close()
-            if banner:
-                return port, banner
-
-            if attempt < max_retries - 1:
-                time.sleep(1)
-                continue
-
-        except Exception as e:
-            if attempt < max_retries - 1:
-                time.sleep(1)
-                continue
-            return port, f"Error after {max_retries} attempts: {str(e)}"
-
-    return port, "No banner received"
+        banner = s.recv(1024).decode('utf-8', errors='ignore').strip()
+        s.close()
+        return port, banner
+    except Exception as e:
+        return port, f"Error: {str(e)}"
 
 
 def banner_grabbing(target, ports):
-    """Perform banner grabbing on open ports"""
+    """Perform parallel banner grabbing"""
     print("\nPerforming banner grabbing...")
     banners = {}
 
@@ -210,15 +183,13 @@ def banner_grabbing(target, ports):
                 banners[port] = banner
                 print(f"[+] Banner for port {port}: {banner}")
             except Exception as e:
-                port = future_to_port[future]
-                banners[port] = f"Error: {str(e)}"
-                print(f"[-] Could not grab banner for port {port}: {e}")
+                print(f"[-] Error in banner grabbing: {e}")
 
     return banners
 
 
 def detect_service_version(banner):
-    """Attempt to identify service version from banner"""
+    """Extract version information from banner"""
     version_patterns = {
         'ssh': r'SSH-\d+\.\d+-([\w._-]+)',
         'http': r'Server: ([\w._-]+)',
@@ -237,42 +208,46 @@ def detect_service_version(banner):
     return "Unknown Version"
 
 
-def scan_ports(target, start_port, end_port):
-    """Perform port scanning with progress tracking"""
-    print(f"\nScanning {target} for open ports...")
-    total_ports = end_port - start_port + 1
-    ports_scanned = 0
-    open_ports = []
+def vuln_scan(target, ports):
+    """Perform vulnerability scan using nmap NSE scripts"""
+    print("\nPerforming vulnerability scan...")
+    nm = nmap.PortScanner()
 
-    port_scanner = PortScanner()
+    if not ports:
+        print("No open ports to scan for vulnerabilities")
+        return {}
 
-    def update_progress(progress):
-        bar_length = 50
-        filled = int(bar_length * progress)
-        bar = '=' * filled + '-' * (bar_length - filled)
-        percent = int(progress * 100)
-        print(f'\rProgress: [{bar}] {percent}%', end='')
+    port_list = ','.join(map(str, ports))
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        future_to_port = {
-            executor.submit(port_scanner.scan_port, target, port): port
-            for port in range(start_port, end_port + 1)
-        }
+    vuln_results = {}
+    try:
+        print("Running vulnerability scripts (this may take a while)...")
+        nm.scan(
+            target,
+            ports=port_list,
+            arguments='--script vuln,exploit,auth,default,version -sV'
+        )
 
-        for future in concurrent.futures.as_completed(future_to_port):
-            ports_scanned += 1
-            progress = ports_scanned / total_ports
-            update_progress(progress)
+        if target in nm.all_hosts():
+            for port in ports:
+                if nm[target].has_tcp(port):
+                    port_info = nm[target]['tcp'][port]
+                    scripts_results = port_info.get('script', {})
 
-            try:
-                port, state = future.result()
-                if state == 'open':
-                    open_ports.append(port)
-            except Exception as e:
-                print(f"\nError scanning port {future_to_port[future]}: {e}")
+                    if scripts_results:
+                        vuln_results[port] = {
+                            'service': port_info.get('name', 'unknown'),
+                            'version': port_info.get('version', 'unknown'),
+                            'vulnerabilities': scripts_results
+                        }
+                        print(f"\n[+] Found potential vulnerabilities on port {port}:")
+                        for script_name, result in scripts_results.items():
+                            print(f"  - {script_name}: {result}")
 
-    print(f"\nScan completed! Found {len(open_ports)} open ports")
-    return open_ports
+    except Exception as e:
+        print(f"\nError during vulnerability scan: {e}")
+
+    return vuln_results
 
 
 def nmap_logger(ports, target, start_port, end_port, scan_start_time):
@@ -288,6 +263,7 @@ def nmap_logger(ports, target, start_port, end_port, scan_start_time):
         hostname = "Unable to resolve"
 
     banners = banner_grabbing(target, ports)
+    vuln_results = vuln_scan(target, ports)
 
     scan_data = {
         "metadata": {
@@ -315,6 +291,7 @@ def nmap_logger(ports, target, start_port, end_port, scan_start_time):
             "service": service_name,
             "version": version,
             "banner": banner,
+            "vulnerabilities": vuln_results.get(port, {}),
             "scan_time": datetime.now().strftime("%H:%M:%S")
         }
         scan_data["open_ports"].append(port_data)

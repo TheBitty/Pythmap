@@ -29,9 +29,7 @@ pip install python-nmap scapy
 ```
 
 ```
-
 ## Installation
-
 1. Clone the Pythmap repository:
 
 ```bash
@@ -39,23 +37,19 @@ git clone https://github.com/yourusername/pythmap.git
 cd pythmap
 ```
 
-2. Install the required dependencies:
-
-```bash
-pip install -r requirements.txt
-```
 
 ## Usage
 
 To run Pythmap, simply execute the following command:
 
 ```bash
-sudo python3 scanner.py script will auto sudo itself 
+sudo python3 scanner.py 
+The script will auto sudo itself 
 ```
 
 The script will guide you through the scanning process:
 
-1. Enter the target IP address to scan
+1. Enter the target IP address to scan 
 2. Select the port range to scan (common, extended, full, or custom)
 3. The script will perform port scanning, banner grabbing, and vulnerability scanning
 

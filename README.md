@@ -8,7 +8,7 @@ Pythmap is a comprehensive network scanning and analysis tool built in Python. I
 - Banner grabbing with service detection
 - Vulnerability scanning using nmap NSE scripts
 - JSON logging with timestamps
-- Multithreaded scanning for improved performance
+- Multithreaded scanning for improved performance(Need to add user threading)
 - Interactive user interface for easy configuration
 - Root privilege checking and elevation
 
@@ -23,7 +23,7 @@ Before using Pythmap, ensure you have the following installed:
 
 Pythmap requires the following Python libraries:
 
-```bash
+`bash
 ```bash
 pip install python-nmap scapy
 ```
@@ -50,7 +50,7 @@ pip install -r requirements.txt
 To run Pythmap, simply execute the following command:
 
 ```bash
-sudo python3 scanner.py
+sudo python3 scanner.py script will auto sudo itself 
 ```
 
 The script will guide you through the scanning process:

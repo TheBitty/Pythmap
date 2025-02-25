@@ -8,7 +8,7 @@ Pythmap is a comprehensive network scanning and analysis tool built in Python. I
 - Banner grabbing with service detection
 - Vulnerability scanning using nmap NSE scripts
 - JSON logging with timestamps
-- Multithreaded scanning for improved performance(Need to add user threading)
+- Multithreaded scanning for improved performance
 - Interactive user interface for easy configuration
 - Root privilege checking and elevation
 

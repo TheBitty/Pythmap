@@ -35,11 +35,12 @@ pip install python-nmap scapy
 ```bash
 git clone https://github.com/yourusername/pythmap.git
 cd pythmap
+mkdir logs
 ```
 
 
 ## Usage
-
+Make sure you create a logs folder before starting
 To run Pythmap, simply execute the following command:
 
 ```bash

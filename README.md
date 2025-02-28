@@ -1,71 +1,74 @@
-# Pythmap
+1 reference
 
-Pythmap is a comprehensive network scanning and analysis tool built in Python. It combines nmap, banner grabbing, and logging capabilities for network reconnaissance and security assessments. Along side threading to make the scan much faster then NMAP when doing a full scan + vulns. 
+Here is an updated version of your README.md with corrected formatting and an example of what the logs will look like with timestamps:
+Pythmap
 
-## Features
+Pythmap is a comprehensive network scanning and analysis tool built in Python. It combines nmap, banner grabbing, and logging capabilities for network reconnaissance and security assessments.
+Features
 
-- Nmap port scanning integration
-- Banner grabbing with service detection
-- Vulnerability scanning using nmap NSE scripts
-- JSON logging with timestamps
-- Multithreaded scanning for improved performance
-- Interactive user interface for easy configuration
-- Root privilege checking and elevation
+    Nmap port scanning integration
+    Banner grabbing with service detection
+    Vulnerability scanning using nmap NSE scripts
+    JSON logging with timestamps
+    Multithreaded scanning for improved performance
+    Interactive user interface for easy configuration
+    Root privilege checking and elevation
 
-## Prerequisites
+Prerequisites
 
 Before using Pythmap, ensure you have the following installed:
 
-- Python 3.x
-- Nmap
+    Python 3.x
+    Nmap
 
-## Python Dependencies
+Python Dependencies
 
 Pythmap requires the following Python libraries:
+bash
 
-`bash
-```bash
 pip install python-nmap scapy
-```
 
-```
-## Installation
-1. Clone the Pythmap repository:
+Installation
 
-```bash
+    Clone the Pythmap repository:
+
+bash
+
 git clone https://github.com/TheBitty/pythmap.git
-```
-```
+
+    Navigate to the repository directory:
+
+bash
+
 cd pythmap
-```
-```
+
+    Create a logs folder:
+
+bash
+
 mkdir logs
-```
 
+Usage
 
-## Usage
-Make sure you create a logs folder before starting
-To run Pythmap, simply execute the following command:
+Make sure you create a logs folder before starting. To run Pythmap, simply execute the following command:
 
-The script will auto sudo itself 
+The script will auto sudo itself:
+bash
 
-```
-sudo python3 scanner.py 
-```
+sudo python3 scanner.py
 
 The script will guide you through the scanning process:
 
-1. Enter the target IP address to scan 
-2. Select the port range to scan (common, extended, full, or custom)
-3. The script will perform port scanning, banner grabbing, and vulnerability scanning
+    Enter the target IP address to scan
+    Select the port range to scan (common, extended, full, or custom)
+    The script will perform port scanning, banner grabbing, and vulnerability scanning
 
-4. Scan results will be displayed in the console and saved to a JSON log file
-
-## Example Output
+Scan results will be displayed in the console and saved to a JSON log file.
+Example Output
 
 Here's an example of running Pythmap against a target IP:
+plaintext
 
-```
 Enter target IP: 192.168.1.100  
 Scanning 192.168.1.100 for open ports...
 Progress: [=================================================] 100%
@@ -86,13 +89,12 @@ Running vulnerability scripts (this may take a while)...
   - http-slowloris-check: VULNERABLE
 
 [+] Scan results saved to scan_192.168.1.100_2025-02-25_09-30-15.json
-```
 
-## Log Format
+Log Format
 
 Scan results are automatically logged to timestamped JSON files. Here's an example log file:
+JSON
 
-```json
 {
     "metadata": {
         "scan_time": "2025-02-25_09-30-15",
@@ -129,4 +131,3 @@ Scan results are automatically logged to timestamped JSON files. Here's an examp
         }
     ]
 }
-```

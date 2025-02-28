@@ -33,8 +33,12 @@ pip install python-nmap scapy
 1. Clone the Pythmap repository:
 
 ```bash
-git clone https://github.com/yourusername/pythmap.git
+git clone https://github.com/TheBitty/pythmap.git
+```
+```
 cd pythmap
+```
+```
 mkdir logs
 ```
 
@@ -43,9 +47,10 @@ mkdir logs
 Make sure you create a logs folder before starting
 To run Pythmap, simply execute the following command:
 
-```bash
-sudo python3 scanner.py 
 The script will auto sudo itself 
+
+```
+sudo python3 scanner.py 
 ```
 
 The script will guide you through the scanning process:

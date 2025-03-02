@@ -1,7 +1,3 @@
-1 reference
-
-Here is an updated version of your README.md with corrected formatting and an example of what the logs will look like with timestamps:
-Pythmap
 
 Pythmap is a comprehensive network scanning and analysis tool built in Python. It combines nmap, banner grabbing, and logging capabilities for network reconnaissance and security assessments.
 Features

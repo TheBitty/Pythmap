@@ -19,6 +19,9 @@ import threading
 import subprocess
 import venv
 
+# Global logger variable
+logger = None
+
 
 def setup_virtual_environment():
     """Setup and activate virtual environment"""
@@ -666,6 +669,8 @@ def print_summary(target, open_ports, scan_start_time):
 
 def main():
     """Entry point for the pythmap scanner"""
+    global logger
+    
     # Setup virtual environment first
     print("Initializing PythMap Scanner...")
     if not setup_virtual_environment():
@@ -674,7 +679,6 @@ def main():
     # Import required packages after venv setup
     try:
         import nmap
-        from scapy.all import *
         print("[+] Required packages loaded successfully")
     except ImportError as e:
         print(f"[-] Failed to import required packages: {e}")

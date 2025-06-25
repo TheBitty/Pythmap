@@ -1,5 +1,3 @@
-import nmap
-from scapy.all import *
 from datetime import datetime
 import json
 import socket
@@ -12,6 +10,91 @@ import math
 import logging
 import logging.handlers
 from concurrent.futures import ThreadPoolExecutor
+import asyncio
+import csv
+import xml.etree.ElementTree as ET
+from typing import List, Dict, Tuple, Optional, Union
+import time
+import threading
+import subprocess
+import venv
+
+
+def setup_virtual_environment():
+    """Setup and activate virtual environment"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_dir = os.path.join(script_dir, "venv")
+    
+    # Check if already in virtual environment
+    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+        print("[+] Already running in virtual environment")
+        return True
+    
+    # Check if venv directory exists
+    if not os.path.exists(venv_dir):
+        print("[+] Creating virtual environment...")
+        try:
+            venv.create(venv_dir, with_pip=True)
+            print(f"[+] Virtual environment created at: {venv_dir}")
+        except Exception as e:
+            print(f"[-] Failed to create virtual environment: {e}")
+            return False
+    
+    # Activate virtual environment by restarting with venv python
+    if os.name == 'nt':  # Windows
+        venv_python = os.path.join(venv_dir, "Scripts", "python.exe")
+        venv_pip = os.path.join(venv_dir, "Scripts", "pip.exe")
+    else:  # Unix/Linux
+        venv_python = os.path.join(venv_dir, "bin", "python")
+        venv_pip = os.path.join(venv_dir, "bin", "pip")
+    
+    if not os.path.exists(venv_python):
+        print("[-] Virtual environment python not found")
+        return False
+    
+    # Install required packages if not already installed
+    required_packages = ["python-nmap", "scapy"]
+    for package in required_packages:
+        try:
+            __import__(package.replace("-", "_"))
+        except ImportError:
+            print(f"[+] Installing {package} in virtual environment...")
+            try:
+                subprocess.check_call([venv_pip, "install", package], 
+                                    stdout=subprocess.DEVNULL, 
+                                    stderr=subprocess.DEVNULL)
+                print(f"[+] {package} installed successfully")
+            except subprocess.CalledProcessError as e:
+                print(f"[-] Failed to install {package}: {e}")
+    
+    # If we're not in the venv python, restart with it
+    if sys.executable != venv_python:
+        print(f"[+] Activating virtual environment and restarting...")
+        try:
+            os.execv(venv_python, [venv_python] + sys.argv)
+        except Exception as e:
+            print(f"[-] Failed to restart with virtual environment: {e}")
+            return False
+    
+    return True
+
+
+def print_banner():
+    """Display ASCII art banner for PythMap"""
+    banner = """
+
+ ██████╗ ██╗   ██╗████████╗██╗  ██╗███╗   ███╗ █████╗ ██████╗ 
+ ██╔══██╗╚██╗ ██╔╝╚══██╔══╝██║  ██║████╗ ████║██╔══██╗██╔══██╗
+ ██████╔╝ ╚████╔╝    ██║   ███████║██╔████╔██║███████║██████╔╝
+ ██╔═══╝   ╚██╔╝     ██║   ██╔══██║██║╚██╔╝██║██╔══██║██╔═══╝ 
+ ██║        ██║      ██║   ██║  ██║██║ ╚═╝ ██║██║  ██║██║     
+ ╚═╝        ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝     
+                                                               
+    An Advanced Network Port Scanner & Security Assessment Tool    
+                     Created By TheBitty               
+
+"""
+    print(banner)
 
 
 def setup_logging():
@@ -154,6 +237,13 @@ def get_port_range():
 def scan_ports(target, start_port, end_port):
     """Perform port scanning with better progress reporting"""
     logger.info(f"\nScanning {target} for open ports...")
+    
+    try:
+        import nmap
+    except ImportError:
+        logger.error("python-nmap package not found. Please run the script again to auto-install dependencies.")
+        return []
+    
     nm = nmap.PortScanner()
     open_ports = []
 
@@ -217,7 +307,7 @@ def scan_ports(target, start_port, end_port):
         print(f'\rProgress: [{"=" * bar_length}] 100%')
         logger.info(f"\nScan completed! Found {len(open_ports)} open ports")
 
-    except nmap.PortScannerError as e:
+    except Exception as e:
         logger.error(f"\nNmap scanning error: {e}")
         # Ensure we still show a complete progress bar in case of error
         print(f'\rProgress: [{"=" * bar_length}] 100% (scan terminated due to error)')
@@ -258,7 +348,30 @@ def get_service_name(port):
         8080: "HTTP-Proxy",
         8443: "HTTPS-Alt",
         27017: "MongoDB",
-        6379: "Redis"
+        6379: "Redis",
+        5900: "VNC",
+        5432: "PostgreSQL",
+        1521: "Oracle",
+        1433: "MSSQL",
+        389: "LDAP",
+        636: "LDAPS",
+        161: "SNMP",
+        162: "SNMP-Trap",
+        69: "TFTP",
+        123: "NTP",
+        135: "RPC",
+        139: "NetBIOS",
+        445: "SMB",
+        993: "IMAPS",
+        995: "POP3S",
+        465: "SMTPS",
+        587: "SMTP-Sub",
+        143: "IMAP",
+        110: "POP3",
+        25: "SMTP",
+        53: "DNS",
+        67: "DHCP",
+        68: "DHCP-Client"
     }
     return common_ports.get(port, "Unknown")
 
@@ -416,6 +529,13 @@ def detect_service_version(banner):
 def vuln_scan(target, ports):
     """Perform vulnerability scan using nmap NSE scripts"""
     logger.info("\nPerforming vulnerability scan...")
+    
+    try:
+        import nmap
+    except ImportError:
+        logger.error("python-nmap package not found. Skipping vulnerability scan.")
+        return {}
+    
     nm = nmap.PortScanner()
 
     if not ports:
@@ -454,7 +574,7 @@ def vuln_scan(target, ports):
                 except Exception as e:
                     logger.error(f"Error processing vulnerability results for port {port}: {e}")
 
-    except nmap.PortScannerError as e:
+    except Exception as e:
         logger.error(f"\nNmap vulnerability scanning error: {e}")
     except Exception as e:
         logger.error(f"\nError during vulnerability scan: {e}")
@@ -545,7 +665,21 @@ def print_summary(target, open_ports, scan_start_time):
 
 
 if __name__ == "__main__":
-    # Set up logging first
+    # Setup virtual environment first
+    print("Initializing PythMap Scanner...")
+    if not setup_virtual_environment():
+        print("[-] Failed to setup virtual environment, continuing anyway...")
+    
+    # Import required packages after venv setup
+    try:
+        import nmap
+        from scapy.all import *
+        print("[+] Required packages loaded successfully")
+    except ImportError as e:
+        print(f"[-] Failed to import required packages: {e}")
+        print("[!] Some functionality may be limited")
+    
+    # Set up logging
     try:
         logger = setup_logging()
     except Exception as e:
@@ -557,11 +691,16 @@ if __name__ == "__main__":
         console = logging.StreamHandler()
         logger.addHandler(console)
 
-    logger.info("Starting advanced port scanner")
-
     try:
         # Check for root privileges
         check_root()
+        
+        # Clear screen after privilege escalation
+        os.system('clear' if os.name != 'nt' else 'cls')
+        
+        # Show banner after screen clear
+        print_banner()
+        logger.info("Starting advanced port scanner")
 
         # Get target information
         target = get_target_ip()

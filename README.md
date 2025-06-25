@@ -14,34 +14,45 @@ PythMap is a powerful network scanning and analysis tool written in Python. It i
 
 ## Prerequisites
 
-Before using PythMap, ensure the following dependencies are installed:
-
-- **Python 3.x**
-- **Nmap** (must be installed and accessible from the command line)
-
-### Python Dependencies
-
-Install the required Python libraries using:
-```bash
-pip install python-nmap scapy
-```
+- Python 3.6 or higher
+- Nmap (must be installed and accessible from the command line)
+- pipx (for system-wide installation)
 
 ## Installation
 
-Clone the PythMap repository and navigate to its directory:
+### Quick Install with pipx
+
+The easiest way to install PythMap system-wide is using pipx:
+
+```bash
+pipx install git+https://github.com/TheBitty/Pythmap.git
+```
+
+After installation, you can run pythmap from anywhere:
+
+```bash
+sudo pythmap
+```
+
+### Manual Installation
+
+If you prefer to run from source:
 
 ```bash
 git clone https://github.com/TheBitty/pythmap.git
 cd pythmap
-mkdir logs  # Create a directory for logs
+pip install -r requirements.txt
+sudo python3 NmapScript.py
 ```
+
+For detailed installation instructions, see [INSTALL.md](INSTALL.md).
 
 ## Usage
 
-Ensure you have a `logs` folder before running the script. To start PythMap, execute:
+To start PythMap after installation:
 
 ```bash
-sudo python3 scanner.py
+sudo pythmap
 ```
 
 The script will guide you through the scanning process:

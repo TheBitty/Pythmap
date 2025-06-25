@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pythmap"
+version = "1.0.0"
+description = "A comprehensive network port scanner and security assessment tool"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}  # Update based on your license
+authors = [
+    {name = "pythmap authors"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "Topic :: System :: Networking",
+    "Topic :: Security",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+]
+dependencies = [
+    "python-nmap>=0.7.1",
+    "scapy>=2.4.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/TheBitty/Pythmap"
+Repository = "https://github.com/TheBitty/Pythmap"
+Issues = "https://github.com/TheBitty/Pythmap/issues"
+
+[project.scripts]
+pythmap = "pythmap.main:main"
+
+[tool.setuptools]
+packages = ["pythmap"]
+
+[tool.setuptools.package-data]
+pythmap = ["*.py"]
